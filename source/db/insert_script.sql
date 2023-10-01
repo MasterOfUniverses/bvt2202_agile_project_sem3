@@ -1,0 +1,24 @@
+INSERT INTO teachers(surname, name) VALUES ('Королева','Светлана Анатольевна');
+INSERT INTO teachers(surname, name) VALUES ('Воронова','Е.В.');
+INSERT INTO teachers(surname, name) VALUES ('Файзулаев','Владимир Нуруллаевич');
+INSERT INTO teachers(surname, name) VALUES ('Скляр','Лидия Николаевна');
+INSERT INTO teachers(surname, name) VALUES ('Шаймарданова','Лилия Кимматовна');
+INSERT INTO teachers(surname, name) VALUES ('Вальковский','Сергей Николаевич');
+INSERT INTO teachers(surname, name) VALUES ('Фурлетов','Юрий Михайлович');
+INSERT INTO teachers(surname, name) VALUES ('Тимчук','Андрей Васильевич');
+INSERT INTO teachers(surname, name) VALUES ('Полищук','Юрий Владимирович');
+INSERT INTO teachers(surname, name) VALUES ('Тренин','Андрей Евгеньевич');
+
+INSERT INTO subject(name,id_teacher) VALUES ('Физ.культ.',1);
+INSERT INTO subject(name,id_teacher) VALUES ('ИНО, практика',2);
+INSERT INTO subject(name,id_teacher) VALUES ('Физика, практика',3);
+INSERT INTO subject(name,id_teacher) VALUES ('История, практика',4);
+INSERT INTO subject(name,id_teacher) VALUES ('Вышмат, практика',5);
+INSERT INTO subject(name,id_teacher) VALUES ('Вышмат, лекция',5);
+INSERT INTO subject(name,id_teacher) VALUES ('Физика, лекция',6);
+INSERT INTO subject(name,id_teacher) VALUES ('ВвИТ, практика',7);
+INSERT INTO subject(name,id_teacher) VALUES ('DevOps, практика',8);
+INSERT INTO subject(name,id_teacher) VALUES ('История, лекция',4);
+INSERT INTO subject(name,id_teacher) VALUES ('Базы Данных, лекция',9);
+INSERT INTO subject(name,id_teacher) VALUES ('Базы Данных, практика',9);
+INSERT INTO subject(name,id_teacher) VALUES ('Физика, лаб.',10);
