@@ -75,7 +75,6 @@ class MainWindow(QWidget):
         self.tt_day_gboxes[week][day].setLayout(self.tt_day_mvbox[week][day])
 
     def _update_tt_day_table(self,week,day):
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT id_time,id_subj,room_numb,id FROM timetable WHERE day={day+1} AND is_even_week={self._week_to_type_bool(week)} ORDER BY id_time;")
         records = list(self.cursor.fetchall())
 
@@ -132,18 +131,15 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM timetable WHERE id={int(row[3])};")
         records = list(self.cursor.fetchall())
         count=count*int(not(len(records)==1 and int(row[3])!=id_code))
-        self.cursor = self.conn.cursor()
         if count>0:
             #print(f"UPDATE timetable SET id_time={int(row[0])}, id_subj={int(row[1])}, room_numb='{row[2]}' WHERE id={int(id_code)};")
             try:
                 self.cursor.execute(f"UPDATE timetable SET id_time={int(row[0])}, id_subj={int(row[1])}, room_numb='{row[2]}', id={int(row[3])} WHERE id={int(id_code)};")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Update: No such time or subject or Exists such id")
-        self.cursor = self.conn.cursor()
         self.tt_day_table[week][day].resizeRowsToContents()
         self._update_tt_day_table(week,day)
 
@@ -167,18 +163,15 @@ class MainWindow(QWidget):
             count=count*int(len(records)==0)
         except:
             count=0
-        self.cursor = self.conn.cursor()
         if count>0:
             try:
                 #print(f"INSERT INTO timetable(id,is_even_week,day,id_time,id_subj,room_numb) VALUES ({int(row[3])},'{self._week_to_type_bool(week)}',{day+1},{int(row[0])},{int(row[1])},'{row[2]})';")
                 self.cursor.execute(f"INSERT INTO timetable(id,is_even_week,day,id_time,id_subj,room_numb) VALUES ({int(row[3])},'{self._week_to_type_bool(week)}',{day+1},{int(row[0])},{int(row[1])},'{row[2]}');")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Add: No such time or subject or Exists such id")
-        self.cursor = self.conn.cursor()
         self.tt_day_table[week][day].resizeRowsToContents()
         self._update_tt_day_table(week,day)
 
@@ -188,7 +181,6 @@ class MainWindow(QWidget):
             self.conn.commit()
         except:
             QMessageBox.about(self, "Error", "Delete: error")
-        self.cursor = self.conn.cursor()
         self.tt_day_table[week][day].resizeRowsToContents()
 
         self._update_tt_day_table(week,day)
@@ -269,18 +261,15 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM timetable WHERE id_time={int(id_code)};")
         records = list(self.cursor.fetchall())
         count=count*int(len(records)==0 or int(row[0])==id_code)
-        self.cursor = self.conn.cursor()
         if count>0:
             #print(f"UPDATE times SET id={int(row[0])}, start_time='{row[1]}', end_time='{row[2]}' WHERE id={int(id_code)};")
             try:
                 self.cursor.execute(f"UPDATE times SET id={int(row[0])}, start_time='{row[1]}', end_time='{row[2]}' WHERE id={int(id_code)};")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Update: Exists such id")
-        self.cursor = self.conn.cursor()
         self.times_interval_table.resizeRowsToContents()
         self._update_times()
 
@@ -295,17 +284,14 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM times WHERE id={int(row[0])};")
         records = list(self.cursor.fetchall())
         count=count*int(len(records)==0)
-        self.cursor = self.conn.cursor()
         if count>0:
             try:
                 self.cursor.execute(f"INSERT INTO times(id,start_time,end_time) VALUES ({int(row[0])},'{row[1]}','{row[2]}');")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Add: Exists such id")
-        self.cursor = self.conn.cursor()
         self.times_interval_table.resizeRowsToContents()
         self._update_times()
 
@@ -314,7 +300,6 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM timetable WHERE id_time={int(id_code)};")
         records = list(self.cursor.fetchall())
         count=count+len(records)
-        self.cursor = self.conn.cursor()
         if count == 0:
             try:
                 self.cursor.execute(f"DELETE FROM times WHERE id={int(id_code)};")
@@ -323,7 +308,6 @@ class MainWindow(QWidget):
                 QMessageBox.about(self, "Error", "Delete: error")
         else:
             QMessageBox.about(self, "Error", "Delete: can't delete: there are foreign keys in timetable")
-        self.cursor = self.conn.cursor()
         self.times_interval_table.resizeRowsToContents()
         self._update_times()
 
@@ -359,7 +343,6 @@ class MainWindow(QWidget):
         self.teachers_gbox.setLayout(self.teachers_mvbox)
 
     def _update_teachers(self):
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT id, surname, name, id_department FROM teachers ORDER BY id;")
         records = list(self.cursor.fetchall())
 
@@ -406,7 +389,6 @@ class MainWindow(QWidget):
         #print(id_code) 
         #print(row_num)        
         count=1
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT * FROM teachers WHERE id={int(row[0])};")
         records = list(self.cursor.fetchall())
         count=count*int(not(len(records)==1 and int(row[0])!=id_code))
@@ -421,18 +403,15 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM subject WHERE id_teacher={int(id_code)};")
         records = list(self.cursor.fetchall())
         count=count*int(len(records)==0 or int(row[0])==id_code)
-        self.cursor = self.conn.cursor()
         if count>0:
             #print(f"UPDATE teachers SET id={int(row[0])}, surname='{row[1]}', name='{row[2]}' , id_department={id_dep_value} WHERE id={int(id_code)};")
             try:
                 self.cursor.execute(f"UPDATE teachers SET id={int(row[0])}, surname='{row[1]}', name='{row[2]}' , id_department={id_dep_value} WHERE id={int(id_code)};")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Update: Exists such id")
-        self.cursor = self.conn.cursor()
         self.teachers_table.resizeRowsToContents()
         self._update_teachers()
 
@@ -444,7 +423,6 @@ class MainWindow(QWidget):
             except:
                 row.append(None)
         count=1
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT * FROM teachers WHERE id={int(row[0])};")
         records = list(self.cursor.fetchall())
         count=count*int(len(records)==0)
@@ -456,37 +434,30 @@ class MainWindow(QWidget):
             self.cursor.execute(f"SELECT * FROM departments WHERE id={id_dep_value};")
             records = list(self.cursor.fetchall())
             count=count*int(len(records)==1)
-        self.cursor = self.conn.cursor()
         if count>0:
             try:
                 self.cursor.execute(f"INSERT INTO teachers(id,surname,name,id_department) VALUES ({int(row[0])},'{row[1]}','{row[2]}',{id_dep_value});")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Add: Exists such id")
-        self.cursor = self.conn.cursor()
         self.teachers_table.resizeRowsToContents()
         self._update_teachers()
 
     def _delete_teachers(self,row_num,id_code):
         count=0
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT * FROM subject WHERE id_teacher={int(id_code)};")
         records = list(self.cursor.fetchall())
         count=count+len(records)
-        self.cursor = self.conn.cursor()
         if count == 0:
             try:
                 self.cursor.execute(f"DELETE FROM teachers WHERE id={int(id_code)};")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Delete: error")
         else:
             QMessageBox.about(self, "Error", "Delete: can't delete: there are foreign keys in subjects")
-        self.cursor = self.conn.cursor()
         self.teachers_table.resizeRowsToContents()
         self._update_teachers()
 
@@ -568,18 +539,15 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM teachers WHERE id_time={int(id_code)};")
         records = list(self.cursor.fetchall())
         count=count*int(len(records)==0 or int(row[0])==id_code)
-        self.cursor = self.conn.cursor()
         if count>0:
             #print(f"UPDATE times SET id={int(row[0])}, start_time='{row[1]}', end_time='{row[2]}' WHERE id={int(id_code)};")
             try:
                 self.cursor.execute(f"UPDATE departments SET id={int(row[0])}, link='{row[1]}', room_numb='{row[2]}' WHERE id={int(id_code)};")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Update: Exists such id")
-        self.cursor = self.conn.cursor()
         self.dep_table.resizeRowsToContents()
         self._update_dep()
 
@@ -594,17 +562,14 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM departments WHERE id={int(row[0])};")
         records = list(self.cursor.fetchall())
         count=count*int(len(records)==0)
-        self.cursor = self.conn.cursor()
         if count>0:
             try:
                 self.cursor.execute(f"INSERT INTO departments(id,link,room_numb) VALUES ({int(row[0])},'{row[1]}','{row[2]}');")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Add: Exists such id")
-        self.cursor = self.conn.cursor()
         self.dep_table.resizeRowsToContents()
         self._update_dep()
 
@@ -613,7 +578,6 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM teachers WHERE id_time={int(id_code)};")
         records = list(self.cursor.fetchall())
         count=count+len(records)
-        self.cursor = self.conn.cursor()
         if count == 0:
             try:
                 self.cursor.execute(f"DELETE FROM departments WHERE id={int(id_code)};")
@@ -622,7 +586,6 @@ class MainWindow(QWidget):
                 QMessageBox.about(self, "Error", "Delete: error")
         else:
             QMessageBox.about(self, "Error", "Delete: can't delete: there are foreign keys in timetable")
-        self.cursor = self.conn.cursor()
         self.dep_table.resizeRowsToContents()
         self._update_dep()
 
@@ -658,7 +621,6 @@ class MainWindow(QWidget):
         self.subj_gbox.setLayout(self.subj_mvbox)
 
     def _update_subj(self):
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT id, name, id_teacher FROM subject ORDER BY id;")
         records = list(self.cursor.fetchall())
 
@@ -703,7 +665,6 @@ class MainWindow(QWidget):
         #print(id_code) 
         #print(row_num)        
         count=1
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT * FROM subject WHERE id={int(row[0])};")
         records = list(self.cursor.fetchall())
         count=count*int(not(len(records)==1 and int(row[0])!=id_code))
@@ -718,18 +679,15 @@ class MainWindow(QWidget):
         self.cursor.execute(f"SELECT * FROM timetable WHERE id_subj={int(id_code)};")
         records = list(self.cursor.fetchall())
         count=count*int(len(records)==0 or int(row[0])==id_code)
-        self.cursor = self.conn.cursor()
         if count>0:
             #print(f"UPDATE teachers SET id={int(row[0])}, surname='{row[1]}', name='{row[2]}' , id_department={id_dep_value} WHERE id={int(id_code)};")
             try:
                 self.cursor.execute(f"UPDATE subject SET id={int(row[0])}, name='{row[1]}' , id_teacher={id_dep_value} WHERE id={int(id_code)};")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Update: Exists such id")
-        self.cursor = self.conn.cursor()
         self.subj_table.resizeRowsToContents()
         self._update_subj()
 
@@ -741,7 +699,6 @@ class MainWindow(QWidget):
             except:
                 row.append(None)
         count=1
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT * FROM subject WHERE id={int(row[0])};")
         records = list(self.cursor.fetchall())
         count=count*int(len(records)==0)
@@ -753,37 +710,30 @@ class MainWindow(QWidget):
             self.cursor.execute(f"SELECT * FROM teachers WHERE id={id_dep_value};")
             records = list(self.cursor.fetchall())
             count=count*int(len(records)==1)
-        self.cursor = self.conn.cursor()
         if count>0:
             try:
                 self.cursor.execute(f"INSERT INTO subject(id,name,id_teacher) VALUES ({int(row[0])},'{row[1]}',{id_dep_value});")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
             QMessageBox.about(self, "Error", "Add: Exists such id")
-        self.cursor = self.conn.cursor()
         self.subj_table.resizeRowsToContents()
         self._update_subj()
 
     def _delete_subj(self,row_num,id_code):
         count=0
-        self.cursor = self.conn.cursor()
         self.cursor.execute(f"SELECT * FROM timetable WHERE id_subj={int(id_code)};")
         records = list(self.cursor.fetchall())
         count=count+len(records)
-        self.cursor = self.conn.cursor()
         if count == 0:
             try:
                 self.cursor.execute(f"DELETE FROM subject WHERE id={int(id_code)};")
                 self.conn.commit()
-                self.cursor = self.conn.cursor()
             except:
                 QMessageBox.about(self, "Error", "Delete: error")
         else:
             QMessageBox.about(self, "Error", "Delete: can't delete: there are foreign keys in subjects")
-        self.cursor = self.conn.cursor()
         self.subj_table.resizeRowsToContents()
         self._update_subj()
 
