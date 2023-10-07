@@ -143,6 +143,6 @@ class DataBase:
         self.conn.commit()
 
     def delete_subjects(self, id):
-        self.cursor.execute(f"DELETE FROM subject WHERE id={int(id_code)};")
+        self.cursor.execute(f"DELETE FROM subject WHERE id={id};")
         self.conn.commit()
 
