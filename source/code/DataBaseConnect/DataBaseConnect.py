@@ -2,12 +2,8 @@ import psycopg2
 
 
 class DataBase:
-    def __init__(self):
-        self.conn = psycopg2.connect(database="bot_timetable",
-                                     user="admin_tt",
-                                     password="admin_lab78",
-                                     host="localhost",
-                                     port="5432")
+    def __init__(self, connect_options):
+        self.conn = psycopg2.connect(**connect_options)
         self.cursor = self.conn.cursor()
 
     # timetable

@@ -1,5 +1,4 @@
-import psycopg2
-import sys
+import sys, json
 from DataBaseConnect.DataBaseConnect import DataBase
 
 from PyQt5.QtWidgets import (QApplication, QWidget,
@@ -18,7 +17,9 @@ class MainWindow(QWidget):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.dataBase = DataBase()
+        entry_data = open("./DataBaseConnect/options_for_connect.json", "r")
+        entry_data = json.load(entry_data)
+        self.dataBase = DataBase(entry_data)
         self.setWindowTitle("bot_timetable")
         self.vbox = QVBoxLayout(self)
 
