@@ -1,852 +1,124 @@
-import psycopg2
 import sys
+import psycopg2
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QPushButton, QLayout, QTabWidget, QVBoxLayout,QWidget
+from PyQt5 import QtCore
 
-from PyQt5.QtWidgets import (QApplication, QWidget,
-                             QTabWidget, QAbstractScrollArea,
-                             QVBoxLayout, QHBoxLayout,
-                             QTableWidget, QGroupBox,
-                         QTableWidgetItem, QPushButton, QMessageBox)
-
-DAYS_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-WEEKS_NUMBER = 2 #WARNING! db has only two weeks as bool field
-                    #for over tt_db - you must change _week_to_type_bool too
-DAYS_NUMBER = len(DAYS_NAMES)
-
-class MainWindow(QWidget):
-    global DAYS_NAMES, WEEKS_NUMBER, DAYS_NUMBER
-
+class MyWindow(QWidget):
     def __init__(self):
-        super(MainWindow, self).__init__()
-        self._connect_to_db()
-        self.setWindowTitle("bot_timetable")
-        self.vbox = QVBoxLayout(self)
+        super().__init__()
+        #Конект к БД
+        self.conn = psycopg2.connect(
+            host="localhost",
+            database="bot_timetable",
+            user="postgres",
+            password="val_2000",
+            client_encoding="UTF8"
+        )
+        self.conn.set_client_encoding('UTF8')
+        self.cur = self.conn.cursor()
+        
+        # Получение всех таблиц
+        self.cur.execute("SELECT table_name FROM information_schema.tables where table_schema = 'public';")
+        gg = self.cur.fetchall()
+        self.table_name = [i[0] for i in gg]
 
-        self._create_all_objects()
+        layout = QVBoxLayout()
+        self.tab_widget = QTabWidget()
+        
+        #Создания tab для всех таблиц
+        for name in self.table_name:
+            self.cur.execute(f"SELECT * FROM {name}")
+            rows = self.cur.fetchall()
+            table = QTableWidget()
+            self.table_update(table,rows)
+            self.tab_widget.addTab(table, name)
 
-        for week in range(0,WEEKS_NUMBER):
-            self._create_tt_week_tab(week)
-        self._create_times_tab()
-        self._create_subj_tab()
-        self._create_teachers_tab()
-        self._create_dep_tab()
+    
+        layout.addWidget(self.tab_widget)
 
-    def _connect_to_db(self):
-        self.conn = psycopg2.connect(database="bot_timetable",
-                                     user="admin_tt",
-                                     password="admin_lab78",
-                                     host="localhost",
-                                     port="5432")
-        self.cursor = self.conn.cursor()
+        #Создание одной кнопки обновить
+        self.update_button = QPushButton("Обновить", self)
+        self.update_button.clicked.connect(self.update_tables)
+        layout.addWidget(self.update_button)
+        
+        self.setLayout(layout)
 
-    def _week_to_type_bool(self,week): #change if db has another week field then boolean
-        if week == 1:
-            return "TRUE"
-        elif week == 0:
-            return "FALSE"
-        else:
-            self.msg = QMessageBox()
-            self.msg.setIcon(QMessageBox.Critical)
-            self.msg.setInformativeText("no such week in this db")
-            self.msg.setText("Error")
-            self.msg.setWindowTitle("Error")
+        table = self.tab_widget.widget(0)
+        row_count = table.rowCount()
+        #col_count = table.colounCount()
 
-    def _create_tt_week_tab(self,week):
-        for day in range(0,DAYS_NUMBER):
-            self.tt_weeks_day_tabs[week].addTab(self.tt_day_tabs[week][day],DAYS_NAMES[day])   
-     
-        self.tt_week_svbox[week].addLayout(self.tt_week_shbox_tabs[week])
-        self.tt_week_svbox[week].addLayout(self.tt_week_shbox_update[week])
-        self.tt_week_shbox_tabs[week].addWidget(self.tt_weeks_day_tabs[week])
-        self.tt_week_shbox_update[week].addWidget(self.tt_update_buttons[week])
-        self.tt_update_buttons[week].clicked.connect(self._update_tt)
-
-        for day in range(0,DAYS_NUMBER):
-            self._create_day_tab(week,day)
-
-
-    def _create_day_tab(self, week, day):
-        self.tt_day_table[week][day].setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-        self.tt_day_table[week][day].setColumnCount(len(self.HEADER_NAMES_TT))
-        self.tt_day_table[week][day].setHorizontalHeaderLabels(self.HEADER_NAMES_TT)
-
-        self._update_tt_day_table(week,day)
-
-        self.tt_day_mvbox[week][day].addWidget(self.tt_day_table[week][day])
-        self.tt_day_gboxes[week][day].setLayout(self.tt_day_mvbox[week][day])
-
-    def _update_tt_day_table(self,week,day):
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT id_time,id_subj,room_numb,id FROM timetable WHERE day={day+1} AND is_even_week={self._week_to_type_bool(week)} ORDER BY id_time;")
-        records = list(self.cursor.fetchall())
-
-        self.tt_day_table[week][day].setRowCount(len(records) +1)
-        i=0
-        for r in records:
-            r = list(r)
-            update_button = QPushButton("Update")
-            delete_button = QPushButton("Delete")
-            self.tt_day_table[week][day].setItem(i, 0,QTableWidgetItem(str(r[0])))
-            self.tt_day_table[week][day].setItem(i, 1,QTableWidgetItem(str(r[1])))
-            self.tt_day_table[week][day].setItem(i, 2,QTableWidgetItem(str(r[2])))
-            self.tt_day_table[week][day].setItem(i, 3,QTableWidgetItem(str(r[3])))
-            self.tt_day_table[week][day].setCellWidget(i, 4, update_button)
-            update_button.clicked.connect(self._return_lambda_tt_update(i,week,day,r[3]))
-            self.tt_day_table[week][day].setCellWidget(i, 5, delete_button)
-            delete_button.clicked.connect(self._return_lambda_tt_delete(i,week,day,r[3]))
-            i=i+1
-        i=0
-        insert_button = QPushButton("Add")
-        self.tt_day_table[week][day].setItem(len(records), 0,QTableWidgetItem(""))
-        self.tt_day_table[week][day].setItem(len(records), 1,QTableWidgetItem(""))
-        self.tt_day_table[week][day].setItem(len(records), 2,QTableWidgetItem(""))
-        self.tt_day_table[week][day].setItem(len(records), 3,QTableWidgetItem(""))
-        self.tt_day_table[week][day].setItem(len(records), 5,QTableWidgetItem(None))
-        self.tt_day_table[week][day].setCellWidget(len(records),4,insert_button)
-        insert_button.clicked.connect(self._return_lambda_tt_insert(len(records),week,day))
-        self.tt_day_table[week][day].resizeRowsToContents()
-
-    def _return_lambda_tt_update(self,i,w,d,id_code):
-        return lambda: self._change_tt_day(i,w,d,id_code)
-    def _return_lambda_tt_delete(self,i,w,d,id_code):
-        return lambda: self._delete_tt_day(i,w,d,id_code)
-    def _return_lambda_tt_insert(self,r,w,d):
-        return lambda: self._insert_tt_day(r,w,d)
-
-
-    def _change_tt_day(self, row_num, week, day,id_code):
-        row = list()
-        for col in range(self.tt_day_table[week][day].columnCount()-2):
-            try:
-                row.append(self.tt_day_table[week][day].item(row_num, col).text())
-            except:
-                row.append(None)
-        #print(id_code) 
-        #print(row_num)        
-        count=1
-        self.cursor.execute(f"SELECT * FROM times WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*len(records)
-        self.cursor.execute(f"SELECT * FROM subject WHERE id={int(row[1])};")
-        records = list(self.cursor.fetchall())
-        count=count*len(records)
-        self.cursor.execute(f"SELECT * FROM timetable WHERE id={int(row[3])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(not(len(records)==1 and int(row[3])!=id_code))
-        self.cursor = self.conn.cursor()
-        if count>0:
-            #print(f"UPDATE timetable SET id_time={int(row[0])}, id_subj={int(row[1])}, room_numb='{row[2]}' WHERE id={int(id_code)};")
-            try:
-                self.cursor.execute(f"UPDATE timetable SET id_time={int(row[0])}, id_subj={int(row[1])}, room_numb='{row[2]}', id={int(row[3])} WHERE id={int(id_code)};")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Update: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Update: No such time or subject or Exists such id")
-        self.cursor = self.conn.cursor()
-        self.tt_day_table[week][day].resizeRowsToContents()
-        self._update_tt_day_table(week,day)
-
-    def _insert_tt_day(self, row_num,week,day):
-        row = list()
-        for col in range(self.tt_day_table[week][day].columnCount()-2):
-            try:
-                row.append(self.tt_day_table[week][day].item(row_num, col).text())
-            except:
-                row.append(None)
-        count=1
-        try:
-            self.cursor.execute(f"SELECT * FROM times WHERE id={int(row[0])};")
-            records = list(self.cursor.fetchall())
-            count=count*len(records)
-            self.cursor.execute(f"SELECT * FROM subject WHERE id={int(row[1])};")
-            records = list(self.cursor.fetchall())
-            count=count*len(records)
-            self.cursor.execute(f"SELECT * FROM timetable WHERE id={int(row[3])};")
-            records = list(self.cursor.fetchall())
-            count=count*int(len(records)==0)
-        except:
-            count=0
-        self.cursor = self.conn.cursor()
-        if count>0:
-            try:
-                #print(f"INSERT INTO timetable(id,is_even_week,day,id_time,id_subj,room_numb) VALUES ({int(row[3])},'{self._week_to_type_bool(week)}',{day+1},{int(row[0])},{int(row[1])},'{row[2]})';")
-                self.cursor.execute(f"INSERT INTO timetable(id,is_even_week,day,id_time,id_subj,room_numb) VALUES ({int(row[3])},'{self._week_to_type_bool(week)}',{day+1},{int(row[0])},{int(row[1])},'{row[2]}');")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Add: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Add: No such time or subject or Exists such id")
-        self.cursor = self.conn.cursor()
-        self.tt_day_table[week][day].resizeRowsToContents()
-        self._update_tt_day_table(week,day)
-
-    def _delete_tt_day(self,row_num, week, day,id_code):
-        try:
-            self.cursor.execute(f"DELETE FROM timetable WHERE id={int(id_code)};")
+    #При нажатии кнопки обновить
+    def update_tables(self):
+        for i in range(len(self.table_name)-2):
+            table = self.tab_widget.widget(i)
+            row = table.rowCount()
+            col = table.columnCount()
+            for row in range(row-1):
+                values = []
+                print(row)
+                for col in range(col-2):
+                    print(col)
+                    cell_value = table.item(row, col).text()
+                    print(cell_value)
+                    values.append(cell_value)
+                # выполнение SQL-запроса на изменение значений в базе данных
+                #print(values[0])
+                if values:
+                    sql_query = f" UPDATE {self.table_name[i]} SET name='{values[0]}' where name = '{values[0]}';"
+                    self.cur.execute(sql_query)
             self.conn.commit()
-        except:
-            QMessageBox.about(self, "Error", "Delete: error")
-        self.cursor = self.conn.cursor()
-        self.tt_day_table[week][day].resizeRowsToContents()
+            self.cur.execute(f"SELECT * FROM {self.table_name[i]}")
+            rows = self.cur.fetchall()
+            self.table_update(table,rows)
 
-        self._update_tt_day_table(week,day)
-
-    def _create_times_tab(self):
-        self.times_svbox = QVBoxLayout(self.times_tab)
-        self.times_shbox_table = QHBoxLayout()
-        self.times_shbox_update = QHBoxLayout()
-        self.times_svbox.addLayout(self.times_shbox_table)
-        self.times_svbox.addLayout(self.times_shbox_update)
-        self.times_gbox = QGroupBox("Times")
-        self.times_shbox_table.addWidget(self.times_gbox)
-        self._create_times_table()
-        self.update_times_button = QPushButton("Update")
-        self.times_shbox_update.addWidget(self.update_times_button)
-        self.update_times_button.clicked.connect(self._update_times)
-
-
-    def _create_times_table(self):
-        self.times_interval_table = QTableWidget()
-        self.times_interval_table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-
-        self.times_interval_table.setColumnCount(len(self.HEADER_NAMES_TIMES))
-        self.times_interval_table.setHorizontalHeaderLabels(self.HEADER_NAMES_TIMES)
-        self.times_mvbox = QVBoxLayout()
-        self._update_times()
-        self.times_mvbox.addWidget(self.times_interval_table)
-        self.times_gbox.setLayout(self.times_mvbox)
-
-    def _update_times(self):
-        self.cursor.execute(f"SELECT id, start_time, end_time FROM times ORDER BY id;")
-        records = list(self.cursor.fetchall())
-
-        self.times_interval_table.setRowCount(len(records) + 1)
-        i=0
-        for r in records:
-            r = list(r)
-            update_button = QPushButton("Update")
-            delete_button = QPushButton("Delete")
-            self.times_interval_table.setItem(i, 0,QTableWidgetItem(str(r[0])))
-            self.times_interval_table.setItem(i, 1,QTableWidgetItem(str(r[1])))
-            self.times_interval_table.setItem(i, 2,QTableWidgetItem(str(r[2])))
-            self.times_interval_table.setCellWidget(i, 3, update_button)
-            update_button.clicked.connect(self._return_lambda_times_update(i,r[0]))
-            self.times_interval_table.setCellWidget(i, 4, delete_button)
-            delete_button.clicked.connect(self._return_lambda_times_delete(i,r[0]))
-            i=i+1
-        i=0
-        insert_button = QPushButton("Add")
-        self.times_interval_table.setItem(len(records), 0,QTableWidgetItem(""))
-        self.times_interval_table.setItem(len(records), 1,QTableWidgetItem(""))
-        self.times_interval_table.setItem(len(records), 2,QTableWidgetItem(""))
-        self.times_interval_table.setItem(len(records), 4,QTableWidgetItem(None))
-        self.times_interval_table.setCellWidget(len(records),3,insert_button)
-        insert_button.clicked.connect(self._return_lambda_times_insert(len(records)))
-        self.times_interval_table.resizeRowsToContents()
-    
-    def _return_lambda_times_update(self,i,id_code):
-        return lambda: self._change_times(i,id_code)
-    def _return_lambda_times_delete(self,i,id_code):
-        return lambda: self._delete_times(i,id_code)
-    def _return_lambda_times_insert(self,r):
-        return lambda: self._insert_times(r)
-
-    def _change_times(self, row_num,id_code):
-        row = list()
-        for col in range(self.times_interval_table.columnCount()-2):
-            try:
-                row.append(self.times_interval_table.item(row_num, col).text())
-            except:
-                row.append(None)
-        #print(id_code) 
-        #print(row_num)        
-        count=1
-        self.cursor.execute(f"SELECT * FROM times WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(not(len(records)==1 and int(row[0])!=id_code))
-        self.cursor.execute(f"SELECT * FROM timetable WHERE id_time={int(id_code)};")
-        records = list(self.cursor.fetchall())
-        count=count*int(len(records)==0 or int(row[0])==id_code)
-        self.cursor = self.conn.cursor()
-        if count>0:
-            #print(f"UPDATE times SET id={int(row[0])}, start_time='{row[1]}', end_time='{row[2]}' WHERE id={int(id_code)};")
-            try:
-                self.cursor.execute(f"UPDATE times SET id={int(row[0])}, start_time='{row[1]}', end_time='{row[2]}' WHERE id={int(id_code)};")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Update: Enter all fields")
+    #Создание tab для таблиц
+    def table_update(self,table, rows):
+        table.setRowCount(len(rows))
+        if(len(rows) == 0):
+            table.setColumnCount(2)
         else:
-            QMessageBox.about(self, "Error", "Update: Exists such id")
-        self.cursor = self.conn.cursor()
-        self.times_interval_table.resizeRowsToContents()
-        self._update_times()
+            table.setColumnCount(len(rows[0])+2)
+        for i, row in enumerate(rows):
+            for j, value in enumerate(row):
+                item = QTableWidgetItem(str(value))
+                item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                table.setItem(i, j, item)
+            button1 = QPushButton("Изменить",table)
+            button2 = QPushButton("Удалить", table)
+            button1.clicked.connect(self.edit_button_clicked)
+            button2.clicked.connect(self.delete_button_clicked)
+            table.setCellWidget(i, len(row), button1)
+            table.setCellWidget(i, len(row)+1, button2)
 
-    def _insert_times(self, row_num):
-        row = list()
-        for col in range(self.times_interval_table.columnCount()-2):
-            try:
-                row.append(self.times_interval_table.item(row_num, col).text())
-            except:
-                row.append(None)
-        count=1
-        self.cursor.execute(f"SELECT * FROM times WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(len(records)==0)
-        self.cursor = self.conn.cursor()
-        if count>0:
-            try:
-                self.cursor.execute(f"INSERT INTO times(id,start_time,end_time) VALUES ({int(row[0])},'{row[1]}','{row[2]}');")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Add: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Add: Exists such id")
-        self.cursor = self.conn.cursor()
-        self.times_interval_table.resizeRowsToContents()
-        self._update_times()
+    #Кнопка изменить
+    def edit_button_clicked(self):
+        button = self.sender()
+        table_widget = button.parent().parent()
+        index = table_widget.indexAt(button.pos())
+        if index.isValid():
+            row = index.row()
+            col = index.column()
+            print(f"нажата кнопка 'Изменить' в строке {row}, колонке {col}")
+            for i in range(table_widget.columnCount()-2):
+                item = table_widget.item(row, i)
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+                table_widget.editItem(item)
+            table_widget.viewport().update()
 
-    def _delete_times(self,row_num,id_code):
-        count=0
-        self.cursor.execute(f"SELECT * FROM timetable WHERE id_time={int(id_code)};")
-        records = list(self.cursor.fetchall())
-        count=count+len(records)
-        self.cursor = self.conn.cursor()
-        if count == 0:
-            try:
-                self.cursor.execute(f"DELETE FROM times WHERE id={int(id_code)};")
-                self.conn.commit()
-            except:
-                QMessageBox.about(self, "Error", "Delete: error")
-        else:
-            QMessageBox.about(self, "Error", "Delete: can't delete: there are foreign keys in timetable")
-        self.cursor = self.conn.cursor()
-        self.times_interval_table.resizeRowsToContents()
-        self._update_times()
-
-
-
-    def _create_teachers_tab(self):
-        self.teachers_svbox = QVBoxLayout(self.teachers_tab)
-        self.teachers_shbox_table = QHBoxLayout()
-        self.teachers_shbox_update = QHBoxLayout()
-        self.teachers_svbox.addLayout(self.teachers_shbox_table)
-        self.teachers_svbox.addLayout(self.teachers_shbox_update)
-        self.teachers_gbox = QGroupBox("Teachers")
-        self.teachers_shbox_table.addWidget(self.teachers_gbox)
-    
-        self._create_teachers_table()
-        self.update_teachers_button = QPushButton("Update")
-        self.teachers_shbox_update.addWidget(self.update_teachers_button)
-        self.update_teachers_button.clicked.connect(self._update_teachers)
-
-
-
-    def _create_teachers_table(self):
-        self.teachers_table = QTableWidget()
-        self.teachers_table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-
-        self.teachers_table.setColumnCount(len(self.HEADER_NAMES_TEACHERS))
-        self.teachers_table.setHorizontalHeaderLabels(self.HEADER_NAMES_TEACHERS)
-        self.teachers_mvbox = QVBoxLayout()
-
-        self._update_teachers()
-
-        self.teachers_mvbox.addWidget(self.teachers_table)
-        self.teachers_gbox.setLayout(self.teachers_mvbox)
-
-    def _update_teachers(self):
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT id, surname, name, id_department FROM teachers ORDER BY id;")
-        records = list(self.cursor.fetchall())
-
-        self.teachers_table.setRowCount(len(records) +1)
-        i=0
-        for r in records:
-            r = list(r)
-            update_button = QPushButton("Update")
-            delete_button = QPushButton("Delete")
-            self.teachers_table.setItem(i, 0,QTableWidgetItem(str(r[0])))
-            self.teachers_table.setItem(i, 1,QTableWidgetItem(str(r[1])))
-            self.teachers_table.setItem(i, 2,QTableWidgetItem(str(r[2])))
-            self.teachers_table.setItem(i, 3,QTableWidgetItem(str(r[3])))
-            self.teachers_table.setCellWidget(i, 4, update_button)
-            update_button.clicked.connect(self._return_lambda_teachers_update(i,r[0]))
-            self.teachers_table.setCellWidget(i, 5, delete_button)
-            delete_button.clicked.connect(self._return_lambda_teachers_delete(i,r[0]))
-            i=i+1
-        i=0
-        insert_button = QPushButton("Add")
-        self.teachers_table.setItem(len(records), 0,QTableWidgetItem(""))
-        self.teachers_table.setItem(len(records), 1,QTableWidgetItem(""))
-        self.teachers_table.setItem(len(records), 2,QTableWidgetItem(""))
-        self.teachers_table.setItem(len(records), 3,QTableWidgetItem(""))
-        self.teachers_table.setItem(len(records), 5,QTableWidgetItem(None))
-        self.teachers_table.setCellWidget(len(records),4,insert_button)
-        insert_button.clicked.connect(self._return_lambda_teachers_insert(len(records)))
-        self.teachers_table.resizeRowsToContents()
-    
-    def _return_lambda_teachers_update(self,i,id_code):
-        return lambda: self._change_teachers(i,id_code)
-    def _return_lambda_teachers_delete(self,i,id_code):
-        return lambda: self._delete_teachers(i,id_code)
-    def _return_lambda_teachers_insert(self,r):
-        return lambda: self._insert_teachers(r)
-
-    def _change_teachers(self, row_num,id_code):
-        row = list()
-        for col in range(self.teachers_table.columnCount()-2):
-            try:
-                row.append(self.teachers_table.item(row_num, col).text())
-            except:
-                row.append(None)
-        #print(id_code) 
-        #print(row_num)        
-        count=1
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT * FROM teachers WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(not(len(records)==1 and int(row[0])!=id_code))
-        id_dep_value=0
-        if str(row[3])=='None':
-            id_dep_value = 'NULL'
-        else:
-            id_dep_value = int(row[3])
-            self.cursor.execute(f"SELECT * FROM departments WHERE id={id_dep_value};")
-            records = list(self.cursor.fetchall())
-            count=count*int(len(records)==1)
-        self.cursor.execute(f"SELECT * FROM subject WHERE id_teacher={int(id_code)};")
-        records = list(self.cursor.fetchall())
-        count=count*int(len(records)==0 or int(row[0])==id_code)
-        self.cursor = self.conn.cursor()
-        if count>0:
-            #print(f"UPDATE teachers SET id={int(row[0])}, surname='{row[1]}', name='{row[2]}' , id_department={id_dep_value} WHERE id={int(id_code)};")
-            try:
-                self.cursor.execute(f"UPDATE teachers SET id={int(row[0])}, surname='{row[1]}', name='{row[2]}' , id_department={id_dep_value} WHERE id={int(id_code)};")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Update: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Update: Exists such id")
-        self.cursor = self.conn.cursor()
-        self.teachers_table.resizeRowsToContents()
-        self._update_teachers()
-
-    def _insert_teachers(self, row_num):
-        row = list()
-        for col in range(self.teachers_table.columnCount()-2):
-            try:
-                row.append(self.teachers_table.item(row_num, col).text())
-            except:
-                row.append(None)
-        count=1
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT * FROM teachers WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(len(records)==0)
-        id_dep_value=0
-        if str(row[3])=='None':
-            id_dep_value = 'NULL'
-        else:
-            id_dep_value = int(row[3])
-            self.cursor.execute(f"SELECT * FROM departments WHERE id={id_dep_value};")
-            records = list(self.cursor.fetchall())
-            count=count*int(len(records)==1)
-        self.cursor = self.conn.cursor()
-        if count>0:
-            try:
-                self.cursor.execute(f"INSERT INTO teachers(id,surname,name,id_department) VALUES ({int(row[0])},'{row[1]}','{row[2]}',{id_dep_value});")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Add: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Add: Exists such id")
-        self.cursor = self.conn.cursor()
-        self.teachers_table.resizeRowsToContents()
-        self._update_teachers()
-
-    def _delete_teachers(self,row_num,id_code):
-        count=0
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT * FROM subject WHERE id_teacher={int(id_code)};")
-        records = list(self.cursor.fetchall())
-        count=count+len(records)
-        self.cursor = self.conn.cursor()
-        if count == 0:
-            try:
-                self.cursor.execute(f"DELETE FROM teachers WHERE id={int(id_code)};")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Delete: error")
-        else:
-            QMessageBox.about(self, "Error", "Delete: can't delete: there are foreign keys in subjects")
-        self.cursor = self.conn.cursor()
-        self.teachers_table.resizeRowsToContents()
-        self._update_teachers()
-
-
-
-    def _create_dep_tab(self):
-        self.dep_svbox = QVBoxLayout(self.dep_tab)
-        self.dep_shbox_table = QHBoxLayout()
-        self.dep_shbox_update = QHBoxLayout()
-        self.dep_svbox.addLayout(self.dep_shbox_table)
-        self.dep_svbox.addLayout(self.dep_shbox_update)
-        self.dep_gbox = QGroupBox("Departments")
-        self.dep_shbox_table.addWidget(self.dep_gbox)
-        self._create_dep_table()
-        self.update_dep_button = QPushButton("Update")
-        self.dep_shbox_update.addWidget(self.update_dep_button)
-        self.update_dep_button.clicked.connect(self._update_dep)
-
-
-    def _create_dep_table(self):
-        self.dep_table = QTableWidget()
-        self.dep_table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-
-        self.dep_table.setColumnCount(len(self.HEADER_NAMES_DEPS))
-        self.dep_table.setHorizontalHeaderLabels(self.HEADER_NAMES_DEPS)
-        self.dep_mvbox = QVBoxLayout()
-        self._update_dep()
-        self.dep_mvbox.addWidget(self.dep_table)
-        self.dep_gbox.setLayout(self.dep_mvbox)
-
-    def _update_dep(self):
-        self.cursor.execute(f"SELECT id, link, room_numb FROM departments ORDER BY id;")
-        records = list(self.cursor.fetchall())
-
-        self.dep_table.setRowCount(len(records) + 1)
-        i=0
-        for r in records:
-            r = list(r)
-            update_button = QPushButton("Update")
-            delete_button = QPushButton("Delete")
-            self.dep_table.setItem(i, 0,QTableWidgetItem(str(r[0])))
-            self.dep_table.setItem(i, 1,QTableWidgetItem(str(r[1])))
-            self.dep_table.setItem(i, 2,QTableWidgetItem(str(r[2])))
-            self.dep_table.setCellWidget(i, 3, update_button)
-            update_button.clicked.connect(self._return_lambda_dep_update(i,r[0]))
-            self.dep_table.setCellWidget(i, 4, delete_button)
-            delete_button.clicked.connect(self._return_lambda_dep_delete(i,r[0]))
-            i=i+1
-        i=0
-        insert_button = QPushButton("Add")
-        self.dep_table.setItem(len(records), 0,QTableWidgetItem(""))
-        self.dep_table.setItem(len(records), 1,QTableWidgetItem(""))
-        self.dep_table.setItem(len(records), 2,QTableWidgetItem(""))
-        self.dep_table.setItem(len(records), 4,QTableWidgetItem(None))
-        self.dep_table.setCellWidget(len(records),3,insert_button)
-        insert_button.clicked.connect(self._return_lambda_dep_insert(len(records)))
-        self.dep_table.resizeRowsToContents()
-    
-    def _return_lambda_dep_update(self,i,id_code):
-        return lambda: self._change_dep(i,id_code)
-    def _return_lambda_dep_delete(self,i,id_code):
-        return lambda: self._delete_dep(i,id_code)
-    def _return_lambda_dep_insert(self,r):
-        return lambda: self._insert_dep(r)
-
-    def _change_dep(self, row_num,id_code):
-        row = list()
-        for col in range(self.dep_table.columnCount()-2):
-            try:
-                row.append(self.dep_table.item(row_num, col).text())
-            except:
-                row.append(None)
-        #print(id_code) 
-        #print(row_num)        
-        count=1
-        self.cursor.execute(f"SELECT * FROM departments WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(not(len(records)==1 and int(row[0])!=id_code))
-        self.cursor.execute(f"SELECT * FROM teachers WHERE id_time={int(id_code)};")
-        records = list(self.cursor.fetchall())
-        count=count*int(len(records)==0 or int(row[0])==id_code)
-        self.cursor = self.conn.cursor()
-        if count>0:
-            #print(f"UPDATE times SET id={int(row[0])}, start_time='{row[1]}', end_time='{row[2]}' WHERE id={int(id_code)};")
-            try:
-                self.cursor.execute(f"UPDATE departments SET id={int(row[0])}, link='{row[1]}', room_numb='{row[2]}' WHERE id={int(id_code)};")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Update: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Update: Exists such id")
-        self.cursor = self.conn.cursor()
-        self.dep_table.resizeRowsToContents()
-        self._update_dep()
-
-    def _insert_dep(self, row_num):
-        row = list()
-        for col in range(self.dep_table.columnCount()-2):
-            try:
-                row.append(self.dep_table.item(row_num, col).text())
-            except:
-                row.append(None)
-        count=1
-        self.cursor.execute(f"SELECT * FROM departments WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(len(records)==0)
-        self.cursor = self.conn.cursor()
-        if count>0:
-            try:
-                self.cursor.execute(f"INSERT INTO departments(id,link,room_numb) VALUES ({int(row[0])},'{row[1]}','{row[2]}');")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Add: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Add: Exists such id")
-        self.cursor = self.conn.cursor()
-        self.dep_table.resizeRowsToContents()
-        self._update_dep()
-
-    def _delete_dep(self,row_num,id_code):
-        count=0
-        self.cursor.execute(f"SELECT * FROM teachers WHERE id_time={int(id_code)};")
-        records = list(self.cursor.fetchall())
-        count=count+len(records)
-        self.cursor = self.conn.cursor()
-        if count == 0:
-            try:
-                self.cursor.execute(f"DELETE FROM departments WHERE id={int(id_code)};")
-                self.conn.commit()
-            except:
-                QMessageBox.about(self, "Error", "Delete: error")
-        else:
-            QMessageBox.about(self, "Error", "Delete: can't delete: there are foreign keys in timetable")
-        self.cursor = self.conn.cursor()
-        self.dep_table.resizeRowsToContents()
-        self._update_dep()
-
-
-####
-    def _create_subj_tab(self):
-        self.subj_svbox = QVBoxLayout(self.subj_tab)
-        self.subj_shbox_table = QHBoxLayout()
-        self.subj_shbox_update = QHBoxLayout()
-        self.subj_svbox.addLayout(self.subj_shbox_table)
-        self.subj_svbox.addLayout(self.subj_shbox_update)
-        self.subj_gbox = QGroupBox("Subjects")
-        self.subj_shbox_table.addWidget(self.subj_gbox)
-    
-        self._create_subj_table()
-        self.update_subj_button = QPushButton("Update")
-        self.subj_shbox_update.addWidget(self.update_subj_button)
-        self.update_subj_button.clicked.connect(self._update_subj)
-
-
-
-    def _create_subj_table(self):
-        self.subj_table = QTableWidget()
-        self.subj_table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-
-        self.subj_table.setColumnCount(len(self.HEADER_NAMES_SUBJ))
-        self.subj_table.setHorizontalHeaderLabels(self.HEADER_NAMES_SUBJ)
-        self.subj_mvbox = QVBoxLayout()
-
-        self._update_subj()
-
-        self.subj_mvbox.addWidget(self.subj_table)
-        self.subj_gbox.setLayout(self.subj_mvbox)
-
-    def _update_subj(self):
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT id, name, id_teacher FROM subject ORDER BY id;")
-        records = list(self.cursor.fetchall())
-
-        self.subj_table.setRowCount(len(records) +1)
-        i=0
-        for r in records:
-            r = list(r)
-            update_button = QPushButton("Update")
-            delete_button = QPushButton("Delete")
-            self.subj_table.setItem(i, 0,QTableWidgetItem(str(r[0])))
-            self.subj_table.setItem(i, 1,QTableWidgetItem(str(r[1])))
-            self.subj_table.setItem(i, 2,QTableWidgetItem(str(r[2])))
-            self.subj_table.setCellWidget(i, 3, update_button)
-            update_button.clicked.connect(self._return_lambda_subj_update(i,r[0]))
-            self.subj_table.setCellWidget(i, 4, delete_button)
-            delete_button.clicked.connect(self._return_lambda_subj_delete(i,r[0]))
-            i=i+1
-        i=0
-        insert_button = QPushButton("Add")
-        self.subj_table.setItem(len(records), 0,QTableWidgetItem(""))
-        self.subj_table.setItem(len(records), 1,QTableWidgetItem(""))
-        self.subj_table.setItem(len(records), 2,QTableWidgetItem(""))
-        self.subj_table.setItem(len(records), 4,QTableWidgetItem(None))
-        self.subj_table.setCellWidget(len(records),3,insert_button)
-        insert_button.clicked.connect(self._return_lambda_subj_insert(len(records)))
-        self.subj_table.resizeRowsToContents()
-    
-    def _return_lambda_subj_update(self,i,id_code):
-        return lambda: self._change_subj(i,id_code)
-    def _return_lambda_subj_delete(self,i,id_code):
-        return lambda: self._delete_subj(i,id_code)
-    def _return_lambda_subj_insert(self,r):
-        return lambda: self._insert_subj(r)
-
-    def _change_subj(self, row_num,id_code):
-        row = list()
-        for col in range(self.subj_table.columnCount()-2):
-            try:
-                row.append(self.subj_table.item(row_num, col).text())
-            except:
-                row.append(None)
-        #print(id_code) 
-        #print(row_num)        
-        count=1
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT * FROM subject WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(not(len(records)==1 and int(row[0])!=id_code))
-        id_dep_value=0
-        if str(row[2])=='None':
-            id_dep_value = 'NULL'
-        else:
-            id_dep_value = int(row[2])
-            self.cursor.execute(f"SELECT * FROM teachers WHERE id={id_dep_value};")
-            records = list(self.cursor.fetchall())
-            count=count*int(len(records)==1)
-        self.cursor.execute(f"SELECT * FROM timetable WHERE id_subj={int(id_code)};")
-        records = list(self.cursor.fetchall())
-        count=count*int(len(records)==0 or int(row[0])==id_code)
-        self.cursor = self.conn.cursor()
-        if count>0:
-            #print(f"UPDATE teachers SET id={int(row[0])}, surname='{row[1]}', name='{row[2]}' , id_department={id_dep_value} WHERE id={int(id_code)};")
-            try:
-                self.cursor.execute(f"UPDATE subject SET id={int(row[0])}, name='{row[1]}' , id_teacher={id_dep_value} WHERE id={int(id_code)};")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Update: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Update: Exists such id")
-        self.cursor = self.conn.cursor()
-        self.subj_table.resizeRowsToContents()
-        self._update_subj()
-
-    def _insert_subj(self, row_num):
-        row = list()
-        for col in range(self.subj_table.columnCount()-2):
-            try:
-                row.append(self.subj_table.item(row_num, col).text())
-            except:
-                row.append(None)
-        count=1
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT * FROM subject WHERE id={int(row[0])};")
-        records = list(self.cursor.fetchall())
-        count=count*int(len(records)==0)
-        id_dep_value=0
-        if str(row[2])=='None':
-            id_dep_value = 'NULL'
-        else:
-            id_dep_value = int(row[2])
-            self.cursor.execute(f"SELECT * FROM teachers WHERE id={id_dep_value};")
-            records = list(self.cursor.fetchall())
-            count=count*int(len(records)==1)
-        self.cursor = self.conn.cursor()
-        if count>0:
-            try:
-                self.cursor.execute(f"INSERT INTO subject(id,name,id_teacher) VALUES ({int(row[0])},'{row[1]}',{id_dep_value});")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Add: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Add: Exists such id")
-        self.cursor = self.conn.cursor()
-        self.subj_table.resizeRowsToContents()
-        self._update_subj()
-
-    def _delete_subj(self,row_num,id_code):
-        count=0
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT * FROM timetable WHERE id_subj={int(id_code)};")
-        records = list(self.cursor.fetchall())
-        count=count+len(records)
-        self.cursor = self.conn.cursor()
-        if count == 0:
-            try:
-                self.cursor.execute(f"DELETE FROM subject WHERE id={int(id_code)};")
-                self.conn.commit()
-                self.cursor = self.conn.cursor()
-            except:
-                QMessageBox.about(self, "Error", "Delete: error")
-        else:
-            QMessageBox.about(self, "Error", "Delete: can't delete: there are foreign keys in subjects")
-        self.cursor = self.conn.cursor()
-        self.subj_table.resizeRowsToContents()
-        self._update_subj()
-
-
-
-
-
-
-
-
-    def _update_tt(self):
-        for week in range(0,WEEKS_NUMBER):
-            for day in range(0,DAYS_NUMBER):
-                self._update_tt_day_table(week,day)
-        #self._update_times()
-        #self._update_teachers()
-        #self._update_subj()
-        #self._update_dep()
-
-
-
-
-
-   
-    def _create_all_objects(self):
-        self.tabs = QTabWidget(self)
-        self.tt_week_tabs =[ QWidget(self) for week in range(0,WEEKS_NUMBER)]
-        self.times_tab = QWidget(self)
-        self.subj_tab = QWidget(self)
-        self.teachers_tab = QWidget(self)
-        self.dep_tab = QWidget(self)
-        
-        for week in range(0,WEEKS_NUMBER):
-            self.tabs.addTab(self.tt_week_tabs[week], f"Timetable week {week}")
-        self.tabs.addTab(self.times_tab, "Times")
-        self.tabs.addTab(self.subj_tab, "Subjects")
-        self.tabs.addTab(self.teachers_tab, "Teachers")
-        self.tabs.addTab(self.dep_tab, "Departments")
-
-        self.vbox.addWidget(self.tabs)
-
-        self.tt_weeks_day_tabs = [ QTabWidget(self.tt_week_tabs[week]) for week in range(0,WEEKS_NUMBER)]
-
-        self.tt_week_svbox = [ QVBoxLayout(self.tt_week_tabs[week]) for week in range(0,WEEKS_NUMBER)]
-        self.tt_week_shbox_tabs = [ QHBoxLayout() for week in range(0,WEEKS_NUMBER)]
-        self.tt_week_shbox_update = [ QHBoxLayout(self.tt_week_tabs[week]) for week in range(0,WEEKS_NUMBER)]
-        self.tt_update_buttons = [ QPushButton("Update") for week in range(0,WEEKS_NUMBER)]
-
-        self.tt_day_tabs = [[QWidget() for day in range(0,DAYS_NUMBER)] for week in range(0,WEEKS_NUMBER)]
-
-        self.tt_day_gboxes = [[QGroupBox(DAYS_NAMES[day],self.tt_day_tabs[week][day]) for day in range(0,DAYS_NUMBER)] for week in range(0,WEEKS_NUMBER)]
-        self.tt_day_mvbox = [[QVBoxLayout(self.tt_day_gboxes[week][day]) for day in range(0,DAYS_NUMBER)] for week in range(0,WEEKS_NUMBER)]
-        self.tt_day_table = [[QTableWidget() for day in range(0,DAYS_NUMBER)] for week in range(0,WEEKS_NUMBER)]
-
-        self.HEADER_NAMES_TT = ["N", "Subject_id", "Room","id","",""]
-        self.HEADER_NAMES_TEACHERS = ["id","Surname", "Name", "Dep_id","",""]
-        self.HEADER_NAMES_TIMES = ["id","start", "end","",""]
-        self.HEADER_NAMES_DEPS = ["id","link", "room","",""]
-        self.HEADER_NAMES_SUBJ = ["id","name", "Teacher_id","",""]
-
+    #Кнопка удалить
+    def delete_button_clicked(self):
+        button = self.sender()
+        table = button.parent().parent()
+        row = button.row()
+        col = button.column()
+        index = table.model().index(row, col)
+        if index.isValid():
+            print(f"нажата кнопка 'Удалить' в строке {row}, колонке {col}")
+            table.removeRow(row)
         
 
-app = QApplication(sys.argv)
-win = MainWindow()
-win.show()
-sys.exit(app.exec_())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = MyWindow()
+    window.show()
+    sys.exit(app.exec_())
