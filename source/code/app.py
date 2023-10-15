@@ -1,5 +1,7 @@
-import sys, json
+import sys, json, os
+from pathlib import Path
 from DataBaseConnect.DataBaseConnect import DataBase
+# from DataBaseConnect.Database import Database
 
 from PyQt5.QtWidgets import (QApplication, QWidget,
                              QTabWidget, QAbstractScrollArea,
@@ -17,9 +19,15 @@ class MainWindow(QWidget):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        entry_data = open("./DataBaseConnect/options_for_connect.json", "r")
+        
+        entry_data = str(os.path.dirname(os.path.abspath(__file__))) 
+        entry_data += "/DataBaseConnect/options_for_connect.json"
+        entry_data = os.path.normpath(entry_data)
+        
+        entry_data = open(entry_data, "r")
         entry_data = json.load(entry_data)
         self.dataBase = DataBase(entry_data)
+
         self.setWindowTitle("bot_timetable")
         self.vbox = QVBoxLayout(self)
 
