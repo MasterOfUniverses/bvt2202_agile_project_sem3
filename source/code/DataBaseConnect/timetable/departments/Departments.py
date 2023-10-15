@@ -1,16 +1,16 @@
 import psycopg2
 
-def Read():
+def read():
     pass
 
-def Read_by_id():
+def read_by_id():
     pass
 
-def Insert():
+def insert():
     pass
 
-def Update():
+def update():
     pass
 
-def Delete():
+def delete():
     pass

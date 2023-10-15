@@ -4,5 +4,5 @@ import json
 class Database:
     timetable = Timetable()
 
-    def Connect():
+    def connect():
         pass
