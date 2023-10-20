@@ -1,6 +1,5 @@
 import sys, json, os
 from pathlib import Path
-from DataBaseConnect.DataBaseConnect import DataBase
 from DataBaseConnect.Database import Database
 
 from PyQt5.QtWidgets import (QApplication, QWidget,
@@ -26,7 +25,6 @@ class MainWindow(QWidget):
         
         entry_data = open(entry_data, "r")
         entry_data = json.load(entry_data)
-        # self.dataBase = DataBase(entry_data)
         self.dataBase = Database(entry_data)
 
         self.setWindowTitle("bot_timetable")
@@ -79,8 +77,7 @@ class MainWindow(QWidget):
 
     def _update_tt_day_table(self,week,day):
 
-        records = self.dataBase.take_day_timetable(self._week_to_type_bool(week), day)
-        # records = self.dataBase.timetable.read(self._week_to_type_bool(week), day)
+        records = self.dataBase.timetable.read(self._week_to_type_bool(week), day)
 
         self.tt_day_table[week][day].setRowCount(len(records) + 1)
         i = 0
@@ -124,20 +121,16 @@ class MainWindow(QWidget):
             except:
                 row.append(None)
         count=1
-        records = self.dataBase.take_times_by_id(int(row[0]))
-        # records = self.dataBase.timetable.times.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.times.read_by_id(int(row[0]))
         count=count*len(records)
-        records = self.dataBase.take_times_by_id(int(row[1]))
-        # records = self.dataBase.timetable.times.read_by_id(int(row[1]))
+        records = self.dataBase.timetable.subject.read_by_id(int(row[1]))
         count=count*len(records)
-        records = self.dataBase.take_times_by_id(int(row[3]))
-        # records = self.dataBase.timetable.times.read_by_id(int(row[3]))
+        records = self.dataBase.timetable.times.read_by_id(int(row[3]))
         count=count*int(not(len(records)==1 and int(row[3])!=id_code))
         if count>0:
 
             try:
-                self.dataBase.update_timetable(int(row[0]), int(row[1]), row[2], int(row[3]), int(id_code))
-                # self.dataBase.timetable.update(int(row[0]), int(row[1]), row[2], int(row[3]), int(id_code))
+                self.dataBase.timetable.update(int(row[0]), int(row[1]), row[2], int(row[3]), int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
@@ -154,22 +147,17 @@ class MainWindow(QWidget):
                 row.append(None)
         count=1
         try:
-            records = self.dataBase.take_times_by_id(int(row[0]))
-            # records = self.dataBase.timetable.times.read_by_id(int(row[0]))
+            records = self.dataBase.timetable.times.read_by_id(int(row[0]))
             count = count*len(records)
-            records = self.dataBase.take_times_by_id(int(row[1]))
-            # records = self.dataBase.timetable.times.read_by_id(int(row[1]))
+            records = self.dataBase.timetable.times.read_by_id(int(row[1]))
             count = count*len(records)
-            records = self.dataBase.take_times_by_id(int(row[3]))
-            # records = self.dataBase.timetable.times.read_by_id(int(row[3]))
+            records = self.dataBase.timetable.times.read_by_id(int(row[3]))
             count = count*int(len(records) == 0)
         except:
             count = 0
         if count > 0:
             try:
-
-                self.dataBase.insert_day_timetable(int(row[3]), self._week_to_type_bool(week), day, int(row[0]), int(row[1]), row[2])
-                # self.dataBase.timetable.insert_day(int(row[3]), self._week_to_type_bool(week), day, int(row[0]), int(row[1]), row[2])
+                self.dataBase.timetable.insert_day(int(row[3]), self._week_to_type_bool(week), day, int(row[0]), int(row[1]), row[2])
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
@@ -179,8 +167,7 @@ class MainWindow(QWidget):
 
     def _delete_tt_day(self,row_num, week, day,id_code):
         try:
-            self.dataBase.delete_day_timetable(int(id_code))
-            # self.dataBase.timetable.delete_day(int(id_code))
+            self.dataBase.timetable.delete_day(int(id_code))
         except:
             QMessageBox.about(self, "Error", "Delete: error")
         self.tt_day_table[week][day].resizeRowsToContents()
@@ -213,8 +200,7 @@ class MainWindow(QWidget):
         self.times_gbox.setLayout(self.times_mvbox)
 
     def _update_times(self):
-        records = self.dataBase.take_times()
-        # records = self.dataBase.timetable.times.read()
+        records = self.dataBase.timetable.times.read()
 
         self.times_interval_table.setRowCount(len(records) + 1)
         i=0
@@ -255,17 +241,14 @@ class MainWindow(QWidget):
             except:
                 row.append(None)    
         count = 1
-        records = self.dataBase.take_times_by_id(int(row[0]))
-        # records = self.dataBase.timetable.times.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.times.read_by_id(int(row[0]))
         count = count*int(not(len(records) == 1 and int(row[0]) != id_code))
-        records = self.dataBase.take_times_by_id(int(id_code))
-        # records = self.dataBase.timetable.times.read_by_id(int(id_code))
+        records = self.dataBase.timetable.times.read_by_id(int(id_code))
         count = count*int(len(records) == 0 or int(row[0]) == id_code)
         if count > 0:
 
             try:
-                self.dataBase.update_times(int(row[0]), row[1], row[2], int(id_code))
-                # self.dataBase.timetable.times.update(int(row[0]), row[1], row[2], int(id_code))
+                self.dataBase.timetable.times.update(int(row[0]), row[1], row[2], int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
@@ -281,13 +264,11 @@ class MainWindow(QWidget):
             except:
                 row.append(None)
         count = 1
-        records = self.dataBase.take_times_by_id(int(row[0]))
-        # records = self.dataBase.timetable.times.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.times.read_by_id(int(row[0]))
         count = count*int(len(records) == 0)
         if count > 0:
             try:
-                self.dataBase.insert_times(int(row[0]), row[1], row[2])
-                # self.dataBase.timetable.times.insert(int(row[0]), row[1], row[2])
+                self.dataBase.timetable.times.insert(int(row[0]), row[1], row[2])
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
@@ -297,13 +278,11 @@ class MainWindow(QWidget):
 
     def _delete_times(self, row_num, id_code):
         count = 0
-        # records = self.dataBase.take_timetable_by_time(int(id_code))
         records = self.dataBase.timetable.read_by_time(int(id_code))
         count = count+len(records)
         if count == 0:
             try:
-                self.dataBase.delete_times(int(id_code))
-                # self.dataBase.timetable.times.delete(int(id_code))
+                self.dataBase.timetable.times.delete(int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Delete: error")
         else:
@@ -343,8 +322,7 @@ class MainWindow(QWidget):
         self.teachers_gbox.setLayout(self.teachers_mvbox)
 
     def _update_teachers(self):
-        records = self.dataBase.take_teachers()
-        # records = self.dataBase.timetable.teachers.read()
+        records = self.dataBase.timetable.teachers.read()
 
         self.teachers_table.setRowCount(len(records) +1)
         i=0
@@ -387,24 +365,20 @@ class MainWindow(QWidget):
             except:
                 row.append(None)    
         count = 1
-        records = self.dataBase.take_times_by_id(int(row[0]))
-        # records = self.dataBase.timetable.times.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.times.read_by_id(int(row[0]))
         count = count*int(not(len(records)==1 and int(row[0])!=id_code))
         id_dep_value = 0
         if str(row[3]) == 'None':
             id_dep_value = 'NULL'
         else:
             id_dep_value = int(row[3])
-            records = self.dataBase.take_departments_by_id(id_dep_value)
-            # records = self.dataBase.timetable.departments.read_by_id(id_dep_value)
+            records = self.dataBase.timetable.departments.read_by_id(id_dep_value)
             count = count*int(len(records) == 1)
-        records = self.dataBase.take_subject_by_teacher(int(id_code))
-        # records = self.dataBase.timetable.subject.read_by_teacher(int(id_code))
+        records = self.dataBase.timetable.subject.read_by_teacher(int(id_code))
         count = count*int(len(records) == 0 or int(row[0]) == id_code)
         if count > 0:
             try:
-                self.dataBase.update_teachers(int(row[0]), row[1], row[2], id_dep_value, int(id_code))
-                # self.dataBase.timetable.teachers.update(int(row[0]), row[1], row[2], id_dep_value, int(id_code))
+                self.dataBase.timetable.teachers.update(int(row[0]), row[1], row[2], id_dep_value, int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
@@ -420,21 +394,18 @@ class MainWindow(QWidget):
             except:
                 row.append(None)
         count = 1
-        records = self.dataBase.take_teachers_by_id(int(row[0]))
-        # records = self.dataBase.timetable.teachers.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.teachers.read_by_id(int(row[0]))
         count = count*int(len(records) == 0)
         id_dep_value=0
         if str(row[3])=='None':
             id_dep_value = 'NULL'
         else:
             id_dep_value = int(row[3])
-            records = self.dataBase.take_departments_by_id(id_dep_value)
-            # records = self.dataBase.timetable.departments.read_by_id(id_dep_value)
+            records = self.dataBase.timetable.departments.read_by_id(id_dep_value)
             count=count*int(len(records) == 1)
         if count>0:
             try:
-                self.dataBase.insert_teachers(int(row[0]), row[1], row[2], id_dep_value)
-                # self.dataBase.timetable.teachers.insert(row[0]), row[1], row[2], id_dep_value)
+                self.dataBase.timetable.teachers.insert((row[0]), row[1], row[2], id_dep_value)
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
@@ -444,13 +415,11 @@ class MainWindow(QWidget):
 
     def _delete_teachers(self,row_num,id_code):
         count = 0
-        records = self.dataBase.take_subject_by_teacher(int(id_code))
-        # records = self.dataBase.timetable.subject.read_by_teacher(int(id_code))
+        records = self.dataBase.timetable.subject.read_by_teacher(int(id_code))
         count = count+len(records)
         if count == 0:
             try:
-                self.dataBase.delete_teachers(int(id_code))
-                # self.dataBase.timetable.teachers.delete(int(id_code))
+                self.dataBase.timetable.teachers.delete(int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Delete: error")
         else:
@@ -486,8 +455,7 @@ class MainWindow(QWidget):
         self.dep_gbox.setLayout(self.dep_mvbox)
 
     def _update_dep(self):
-        records = self.dataBase.take_departments()
-        # records = self.dataBase.timetable.departments.read()
+        records = self.dataBase.timetable.departments.read()
 
         self.dep_table.setRowCount(len(records) + 1)
         i=0
@@ -530,19 +498,13 @@ class MainWindow(QWidget):
         #print(id_code) 
         #print(row_num)        
         count = 1
-        records = self.dataBase.take_teachers_by_id(int(row[0]))
-        # records = self.dataBase.timetable.teachers.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.teachers.read_by_id(int(row[0]))
         count = count*int(not(len(records) == 1 and int(row[0]) != id_code))
-        records = self.dataBase.take_teachers_by_depart(int(id_code))
-        # records = self.dataBase.timetable.teachers.read_by_depart(int(id_code))
+        records = self.dataBase.timetable.teachers.read_by_depart(int(id_code))
         count = count*int(len(records) == 0 or int(row[0]) == id_code)
         if count > 0:
-            #print(f"UPDATE times SET id={int(row[0])}, start_time='{row[1]}', end_time='{row[2]}' WHERE id={int(id_code)};")
             try:
-                self.cursor.execute(f"UPDATE departments SET id={int(row[0])}, link='{row[1]}', room_numb='{row[2]}' WHERE id={int(id_code)};")
-                self.conn.commit()
-                self.dataBase.update_departments(int(row[0]), row[1], row[2], int(id_code))
-                # self.dataBase.timetable.departments.update(int(row[0]), row[1], row[2], int(id_code))
+                self.dataBase.timetable.departments.update(int(row[0]), row[1], row[2], int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
@@ -558,13 +520,11 @@ class MainWindow(QWidget):
             except:
                 row.append(None)
         count = 1
-        records = self.dataBase.take_departments_by_id(int(row[0]))
-        # records = self.dataBase.timetable.departments.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.departments.read_by_id(int(row[0]))
         count = count*int(len(records) == 0)
         if count > 0:
             try:
-                self.dataBase.insert_departments(int(row[0]), row[1], row[2])
-                # self.dataBase.timetable.departments.insert(int(row[0]), row[1], row[2])
+                self.dataBase.timetable.departments.insert(int(row[0]), row[1], row[2])
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
@@ -574,13 +534,11 @@ class MainWindow(QWidget):
 
     def _delete_dep(self,row_num,id_code):
         count = 0
-        records = self.dataBase.take_teachers_by_depart(int(id_code))
-        # records = self.dataBase.timetable.teachers.read_by_depart(int(id_code))
+        records = self.dataBase.timetable.teachers.read_by_depart(int(id_code))
         count = count+len(records)
         if count == 0:
             try:
-                self.dataBase.delete_departments(int(id_code))
-                # self.dataBase.timetable.departments.delete(int(id_code))
+                self.dataBase.timetable.departments.delete(int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Delete: error")
         else:
@@ -620,8 +578,7 @@ class MainWindow(QWidget):
         self.subj_gbox.setLayout(self.subj_mvbox)
 
     def _update_subj(self):
-        records = self.dataBase.take_subjects()
-        # records = self.dataBase.timetable.subject.read()
+        records = self.dataBase.timetable.subject.read()
 
         self.subj_table.setRowCount(len(records) +1)
         i=0
@@ -662,25 +619,21 @@ class MainWindow(QWidget):
             except:
                 row.append(None)  
         count=1
-        records = self.dataBase.take_subjects_by_id(int(row[0]))
-        # records = self.dataBase.timetable.subject.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.subject.read_by_id(int(row[0]))
         count=count*int(not(len(records)==1 and int(row[0])!=id_code))
         id_dep_value=0
         if str(row[2])=='None':
             id_dep_value = 'NULL'
         else:
             id_dep_value = int(row[2])
-            records = self.dataBase.take_teachers_by_id(id_dep_value)
-            # records = self.dataBase.timetable.teachers.read_by_id(id_dep_value)
+            records = self.dataBase.timetable.teachers.read_by_id(id_dep_value)
             count=count*int(len(records)==1)
-        records = self.dataBase.take_timetable_by_subj(int(id_code))
-        # records = self.dataBase.timetable.read_by_subject(int(id_code))
+        records = self.dataBase.timetable.read_by_subject(int(id_code))
         count=count*int(len(records)==0 or int(row[0])==id_code)
         if count>0:
 
             try:
-                self.dataBase.update_subjects(int(row[0]), row[1], id_dep_value, int(id_code))
-                # self.dataBase.timetable.subject.update(int(row[0]), row[1], id_dep_value, int(id_code))
+                self.dataBase.timetable.subject.update(int(row[0]), row[1], id_dep_value, int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Update: Enter all fields")
         else:
@@ -696,21 +649,18 @@ class MainWindow(QWidget):
             except:
                 row.append(None)
         count=1
-        records = self.dataBase.take_subjects_by_id(int(row[0]))
-        # records = self.dataBase.timetable.subject.read_by_id(int(row[0]))
+        records = self.dataBase.timetable.subject.read_by_id(int(row[0]))
         count=count*int(len(records)==0)
         id_dep_value=0
         if str(row[2])=='None':
             id_dep_value = 'NULL'
         else:
             id_dep_value = int(row[2])
-            records = self.dataBase.take_teachers_by_id(id_dep_value)
-            # records = self.dataBase.timetable.teachers.read_by_id(id_dep_value)
+            records = self.dataBase.timetable.teachers.read_by_id(id_dep_value)
             count=count*int(len(records)==1)
         if count>0:
             try:
-                self.dataBase.insert_subjects(int(row[0]), row[1], id_dep_value)
-                # self.dataBase.timetable.subject.insert(int(row[0]), row[1], id_dep_value)
+                self.dataBase.timetable.subject.insert(int(row[0]), row[1], id_dep_value)
             except:
                 QMessageBox.about(self, "Error", "Add: Enter all fields")
         else:
@@ -720,13 +670,11 @@ class MainWindow(QWidget):
 
     def _delete_subj(self,row_num,id_code):
         count=0
-        records = self.dataBase.take_timetable_by_subj(int(id_code))
-        # records = self.dataBase.timetable.read_by_subject(int(id_code))
+        records = self.dataBase.timetable.read_by_subject(int(id_code))
         count=count+len(records)
         if count == 0:
             try:
-                self.dataBase.delete_subjects(int(id_code))
-                # self.dataBase.timetable.subject.delete(int(id_code))
+                self.dataBase.timetable.subject.delete(int(id_code))
             except:
                 QMessageBox.about(self, "Error", "Delete: error")
         else:

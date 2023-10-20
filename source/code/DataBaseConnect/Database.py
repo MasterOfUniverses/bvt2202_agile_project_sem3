@@ -1,4 +1,4 @@
-from timetable.Timetable import Timetable
+from .timetable.Timetable import Timetable
 import json
 import psycopg2
 

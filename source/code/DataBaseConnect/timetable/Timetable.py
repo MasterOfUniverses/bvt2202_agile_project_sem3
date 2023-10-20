@@ -1,7 +1,7 @@
-from times.Times import Times
-from departments.Departments import Departments
-from teachers.Teachers import Teachers
-from subject.Subject import Subject
+from .times.Times import Times
+from .departments.Departments import Departments
+from .teachers.Teachers import Teachers
+from .subject.Subject import Subject
 
 
 class Timetable:
