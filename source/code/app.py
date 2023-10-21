@@ -5,6 +5,7 @@ from View.Subjects import Subjects
 from View.Teachers import Teachers
 from View.Departments import Departments
 from View.Times import Times
+from View.Timetable import Timetable
 
 from PyQt5.QtWidgets import (QApplication, QWidget,
                              QTabWidget, QAbstractScrollArea,
@@ -74,111 +75,10 @@ class MainWindow(QWidget):
         self.tt_day_table[week][day].setColumnCount(len(self.HEADER_NAMES_TT))
         self.tt_day_table[week][day].setHorizontalHeaderLabels(self.HEADER_NAMES_TT)
 
-        self._update_tt_day_table(week, day)
+        self.timetables[week][day].update_tt_day_table()
 
         self.tt_day_mvbox[week][day].addWidget(self.tt_day_table[week][day])
         self.tt_day_gboxes[week][day].setLayout(self.tt_day_mvbox[week][day])
-
-    def _update_tt_day_table(self, week, day):
-
-        records = self.dataBase.timetable.read(self._week_to_type_bool(week), day)
-
-        self.tt_day_table[week][day].setRowCount(len(records) + 1)
-        i = 0
-        for r in records:
-            r = list(r)
-            update_button = QPushButton("Update")
-            delete_button = QPushButton("Delete")
-            self.tt_day_table[week][day].setItem(i, 0, QTableWidgetItem(str(r[0])))
-            self.tt_day_table[week][day].setItem(i, 1, QTableWidgetItem(str(r[1])))
-            self.tt_day_table[week][day].setItem(i, 2, QTableWidgetItem(str(r[2])))
-            self.tt_day_table[week][day].setItem(i, 3, QTableWidgetItem(str(r[3])))
-            self.tt_day_table[week][day].setCellWidget(i, 4, update_button)
-            update_button.clicked.connect(self._return_lambda_tt_update(i, week, day, r[3]))
-            self.tt_day_table[week][day].setCellWidget(i, 5, delete_button)
-            delete_button.clicked.connect(self._return_lambda_tt_delete(i, week, day, r[3]))
-            i = i + 1
-        i = 0
-        insert_button = QPushButton("Add")
-        self.tt_day_table[week][day].setItem(len(records), 0, QTableWidgetItem(""))
-        self.tt_day_table[week][day].setItem(len(records), 1, QTableWidgetItem(""))
-        self.tt_day_table[week][day].setItem(len(records), 2, QTableWidgetItem(""))
-        self.tt_day_table[week][day].setItem(len(records), 3, QTableWidgetItem(""))
-        self.tt_day_table[week][day].setItem(len(records), 5, QTableWidgetItem(None))
-        self.tt_day_table[week][day].setCellWidget(len(records), 4, insert_button)
-        insert_button.clicked.connect(self._return_lambda_tt_insert(len(records), week, day))
-        self.tt_day_table[week][day].resizeRowsToContents()
-
-    def _return_lambda_tt_update(self, i, w, d, id_code):
-        return lambda: self._change_tt_day(i, w, d, id_code)
-
-    def _return_lambda_tt_delete(self, i, w, d, id_code):
-        return lambda: self._delete_tt_day(i, w, d, id_code)
-
-    def _return_lambda_tt_insert(self, r, w, d):
-        return lambda: self._insert_tt_day(r, w, d)
-
-    def _change_tt_day(self, row_num, week, day, id_code):
-        row = list()
-        for col in range(self.tt_day_table[week][day].columnCount() - 2):
-            try:
-                row.append(self.tt_day_table[week][day].item(row_num, col).text())
-            except:
-                row.append(None)
-        count = 1
-        records = self.dataBase.timetable.times.read_by_id(int(row[0]))
-        count = count * len(records)
-        records = self.dataBase.timetable.subject.read_by_id(int(row[1]))
-        count = count * len(records)
-        records = self.dataBase.timetable.times.read_by_id(int(row[3]))
-        count = count * int(not (len(records) == 1 and int(row[3]) != id_code))
-        if count > 0:
-
-            try:
-                self.dataBase.timetable.update(int(row[0]), int(row[1]), row[2], int(row[3]), int(id_code))
-            except:
-                QMessageBox.about(self, "Error", "Update: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Update: No such time or subject or Exists such id")
-        self.tt_day_table[week][day].resizeRowsToContents()
-        self._update_tt_day_table(week, day)
-
-    def _insert_tt_day(self, row_num, week, day):
-        row = list()
-        for col in range(self.tt_day_table[week][day].columnCount() - 2):
-            try:
-                row.append(self.tt_day_table[week][day].item(row_num, col).text())
-            except:
-                row.append(None)
-        count = 1
-        try:
-            records = self.dataBase.timetable.times.read_by_id(int(row[0]))
-            count = count * len(records)
-            records = self.dataBase.timetable.times.read_by_id(int(row[1]))
-            count = count * len(records)
-            records = self.dataBase.timetable.times.read_by_id(int(row[3]))
-            count = count * int(len(records) == 0)
-        except:
-            count = 0
-        if count > 0:
-            try:
-                self.dataBase.timetable.insert_day(int(row[3]), self._week_to_type_bool(week), day, int(row[0]),
-                                                   int(row[1]), row[2])
-            except:
-                QMessageBox.about(self, "Error", "Add: Enter all fields")
-        else:
-            QMessageBox.about(self, "Error", "Add: No such time or subject or Exists such id")
-        self.tt_day_table[week][day].resizeRowsToContents()
-        self._update_tt_day_table(week, day)
-
-    def _delete_tt_day(self, row_num, week, day, id_code):
-        try:
-            self.dataBase.timetable.delete_day(int(id_code))
-        except:
-            QMessageBox.about(self, "Error", "Delete: error")
-        self.tt_day_table[week][day].resizeRowsToContents()
-
-        self._update_tt_day_table(week, day)
 
     def _create_times_tab(self):
         self.times_svbox = QVBoxLayout(self.times_tab)
@@ -282,8 +182,6 @@ class MainWindow(QWidget):
         self.subj_table.setHorizontalHeaderLabels(self.HEADER_NAMES_SUBJ)
         self.subj_mvbox = QVBoxLayout()
 
-        # self._update_subj()
-
         self.subj_mvbox.addWidget(self.subj_table)
         self.subj_gbox.setLayout(self.subj_mvbox)
 
@@ -292,11 +190,7 @@ class MainWindow(QWidget):
     def _update_tt(self):
         for week in range(0, WEEKS_NUMBER):
             for day in range(0, DAYS_NUMBER):
-                self._update_tt_day_table(week, day)
-        # self._update_times()
-        # self._update_teachers()
-        # self._update_subj()
-        # self._update_dep()
+                self.timetables[week][day].update_tt_day_table()
 
     def _create_all_objects(self):
         self.tabs = QTabWidget(self)
@@ -329,6 +223,7 @@ class MainWindow(QWidget):
         self.tt_day_mvbox = [[QVBoxLayout(self.tt_day_gboxes[week][day]) for day in range(0, DAYS_NUMBER)] for week in
                              range(0, WEEKS_NUMBER)]
         self.tt_day_table = [[QTableWidget() for day in range(0, DAYS_NUMBER)] for week in range(0, WEEKS_NUMBER)]
+        self.timetables = [[Timetable(self.dataBase, self.tt_day_table[week][day], week, day) for day in range(0, DAYS_NUMBER)] for week in range(0, WEEKS_NUMBER)]
 
         self.HEADER_NAMES_TT = ["N", "Subject_id", "Room", "id", "", ""]
         self.HEADER_NAMES_TEACHERS = ["id", "Surname", "Name", "Dep_id", "", ""]
