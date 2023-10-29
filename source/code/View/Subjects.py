@@ -3,6 +3,11 @@ from PyQt5.QtWidgets import QPushButton, QTableWidgetItem, QMessageBox
 
 class Subjects:
 
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Subjects, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self, database, table):
         self.dataBase = database
         self.table = table

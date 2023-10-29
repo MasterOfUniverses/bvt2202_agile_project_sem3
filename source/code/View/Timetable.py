@@ -4,6 +4,11 @@ from .utils import week_to_type_bool
 
 class Timetable:
 
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Timetable, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self, database, table, week, day):
         self.dataBase = database
         self.table = table

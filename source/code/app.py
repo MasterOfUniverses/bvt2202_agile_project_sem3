@@ -21,6 +21,11 @@ DAYS_NUMBER = len(DAYS_NAMES)
 
 class MainWindow(QWidget):
     global DAYS_NAMES, WEEKS_NUMBER, DAYS_NUMBER
+    
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(MainWindow, cls).__new__(cls)
+        return cls.instance
 
     def __init__(self):
         super(MainWindow, self).__init__()
