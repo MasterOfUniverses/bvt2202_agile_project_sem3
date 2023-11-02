@@ -1,6 +1,6 @@
 from .timetable.Timetable import Timetable
 import json
-# import psycopg2
+import psycopg2
 
 class Database:
 
