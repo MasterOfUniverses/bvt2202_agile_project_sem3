@@ -25,25 +25,27 @@ class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
 
+        self.setStyleSheet("background-image: ;")
+
         entry_data = str(os.path.dirname(os.path.abspath(__file__)))
         entry_data += "/DataBaseConnect/options_for_connect.json"
         entry_data = os.path.normpath(entry_data)
 
         entry_data = open(entry_data, "r")
         entry_data = json.load(entry_data)
-        self.dataBase = Database(entry_data)
+        # self.dataBase = Database(entry_data)
 
         self.setWindowTitle("bot_timetable")
         self.vbox = QVBoxLayout(self)
 
-        self._create_all_objects()
+        # self._create_all_objects()
 
-        for week in range(0, WEEKS_NUMBER):
-            self._create_tt_week_tab(week)
-        self._create_times_tab()
-        self._create_subj_tab()
-        self._create_teachers_tab()
-        self._create_dep_tab()
+        # for week in range(0, WEEKS_NUMBER):
+        #     self._create_tt_week_tab(week)
+        # self._create_times_tab()
+        # self._create_subj_tab()
+        # self._create_teachers_tab()
+        # self._create_dep_tab()
 
     def _week_to_type_bool(self, week):  # change if db has another week field then boolean
         if week == 1:
