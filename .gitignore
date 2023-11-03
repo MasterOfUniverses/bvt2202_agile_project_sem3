@@ -1,7 +1,4 @@
 *.log
 venv/**
 .idea/
-source/code/View/_pycache_
-source/code/DataBaseConnect/_pycache_
-source/code/DataBaseConnect/timetable/_pycache_
-source/code/DataBaseConnect/timetable/**/_pycache_
+**/_pycache_
