@@ -42,7 +42,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: DB
       run: |
-        source/db/init_db.bat
+        source source/db/init_db.bat
   #  - name: Build
   #    run: |
   #      export QT_QPA_PLATFORM=offscreen 
