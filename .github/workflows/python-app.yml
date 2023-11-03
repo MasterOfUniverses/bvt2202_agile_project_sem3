@@ -44,7 +44,7 @@ jobs:
       run: |
         source source/db/init_db.bat
       env:
-        PGPASSWORD: postgres
+        PGPASSWORD: post1212
   #  - name: Build
   #    run: |
   #      export QT_QPA_PLATFORM=offscreen 
