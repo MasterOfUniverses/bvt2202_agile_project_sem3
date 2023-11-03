@@ -30,58 +30,6 @@ class MainWindow(QWidget):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.setWindowIcon(QtGui.QIcon('../img/timetable-icon.png'))
-        self.setStyleSheet("background-color: #ede9f2;")
-        self.setWindowTitle("Расписание")
-        # self.update_times_button.setStyleSheet("""
-        #             QPushButton {
-        #                 background-color: #e2dce6;
-        #             }
-        #             QPushButton:hover {
-        #                 color: #a164ed;
-        #             }
-        #             """)
-        # self.update_teachers_button.setStyleSheet("""
-        #                     QPushButton {
-        #                         background-color: #e2dce6;
-        #                     }
-        #                     QPushButton:hover {
-        #                         color: #a164ed;
-        #                     }
-        #                     """)
-        # self.update_teachers_button.setStyleSheet("""
-        #                             QPushButton {
-        #                                 background-color: #e2dce6;
-        #                             }
-        #                             QPushButton:hover {
-        #                                 color: #a164ed;
-        #                             }
-        #                             """)
-        # self.update_dep_button.setStyleSheet("""
-        #                             QPushButton {
-        #                                 background-color: #e2dce6;
-        #                             }
-        #                             QPushButton:hover {
-        #                                 color: #a164ed;
-        #                             }
-        #                             """)
-        # self.update_subj_button.setStyleSheet("""
-        #                             QPushButton {
-        #                                 background-color: #e2dce6;
-        #                             }
-        #                             QPushButton:hover {
-        #                                 color: #a164ed;
-        #                             }
-        #                             """)
-        # self.tt_update_buttons.setStyleSheet("""
-        #                             QPushButton {
-        #                                 background-color: #e2dce6;
-        #                             }
-        #                             QPushButton:hover {
-        #                                 color: #a164ed;
-        #                             }
-        #                             """)
-
 
         entry_data = str(os.path.dirname(os.path.abspath(__file__)))
         entry_data += "/DataBaseConnect/options_for_connect.json"
@@ -89,7 +37,7 @@ class MainWindow(QWidget):
 
         entry_data = open(entry_data, "r")
         entry_data = json.load(entry_data)
-        # self.dataBase = Database(entry_data)
+        self.dataBase = Database(entry_data)
 
         self.vbox = QVBoxLayout(self)
 
@@ -101,6 +49,61 @@ class MainWindow(QWidget):
         self._create_subj_tab()
         self._create_teachers_tab()
         self._create_dep_tab()
+        self.set_styles()
+
+    def set_styles(self):
+        self.setWindowIcon(QtGui.QIcon('../img/timetable-icon.png'))
+        self.setStyleSheet("background-color: #ede9f2;")
+        self.setWindowTitle("Расписание")
+        self.update_times_button.setStyleSheet("""
+                                    QPushButton {
+                                        background-color: #e2dce6;
+                                    }
+                                    QPushButton:hover {
+                                        color: #a164ed;
+                                    }
+                                    """)
+        self.update_teachers_button.setStyleSheet("""
+                                            QPushButton {
+                                                background-color: #e2dce6;
+                                            }
+                                            QPushButton:hover {
+                                                color: #a164ed;
+                                            }
+                                            """)
+        self.update_teachers_button.setStyleSheet("""
+                                                    QPushButton {
+                                                        background-color: #e2dce6;
+                                                    }
+                                                    QPushButton:hover {
+                                                        color: #a164ed;
+                                                    }
+                                                    """)
+        self.update_dep_button.setStyleSheet("""
+                                                    QPushButton {
+                                                        background-color: #e2dce6;
+                                                    }
+                                                    QPushButton:hover {
+                                                        color: #a164ed;
+                                                    }
+                                                    """)
+        self.update_subj_button.setStyleSheet("""
+                                                    QPushButton {
+                                                        background-color: #e2dce6;
+                                                    }
+                                                    QPushButton:hover {
+                                                        color: #a164ed;
+                                                    }
+                                                    """)
+        for i in range(0, 2):
+            self.tt_update_buttons[i].setStyleSheet("""
+                                                        QPushButton {
+                                                            background-color: #e2dce6;
+                                                        }
+                                                        QPushButton:hover {
+                                                            color: #a164ed;
+                                                        }
+                                                        """)
 
     def _week_to_type_bool(self, week):  # change if db has another week field then boolean
         if week == 1:
@@ -288,54 +291,7 @@ class MainWindow(QWidget):
         self.HEADER_NAMES_DEPS = ["id", "link", "room", "", ""]
         self.HEADER_NAMES_SUBJ = ["id", "name", "Teacher_id", "", ""]
 
-        self.update_times_button.setStyleSheet("""
-                            QPushButton {
-                                background-color: #e2dce6;
-                            }
-                            QPushButton:hover {
-                                color: #a164ed;
-                            }
-                            """)
-        self.update_teachers_button.setStyleSheet("""
-                                    QPushButton {
-                                        background-color: #e2dce6;
-                                    }
-                                    QPushButton:hover {
-                                        color: #a164ed;
-                                    }
-                                    """)
-        self.update_teachers_button.setStyleSheet("""
-                                            QPushButton {
-                                                background-color: #e2dce6;
-                                            }
-                                            QPushButton:hover {
-                                                color: #a164ed;
-                                            }
-                                            """)
-        self.update_dep_button.setStyleSheet("""
-                                            QPushButton {
-                                                background-color: #e2dce6;
-                                            }
-                                            QPushButton:hover {
-                                                color: #a164ed;
-                                            }
-                                            """)
-        self.update_subj_button.setStyleSheet("""
-                                            QPushButton {
-                                                background-color: #e2dce6;
-                                            }
-                                            QPushButton:hover {
-                                                color: #a164ed;
-                                            }
-                                            """)
-        self.tt_update_buttons.setStyleSheet("""
-                                            QPushButton {
-                                                background-color: #e2dce6;
-                                            }
-                                            QPushButton:hover {
-                                                color: #a164ed;
-                                            }
-                                            """)
+
 
 
 app = QApplication(sys.argv)
