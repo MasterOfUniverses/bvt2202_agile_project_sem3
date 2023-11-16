@@ -1,9 +1,6 @@
 import sys, json, os
 from pathlib import Path
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage
-from PyQt5 import QtCore
 from PyQt5 import QtGui
 
 from DataBaseConnect.Database import Database
