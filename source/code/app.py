@@ -1,5 +1,8 @@
 import sys, json, os
 from pathlib import Path
+
+from PyQt5 import QtGui
+
 from DataBaseConnect.Database import Database
 from View.Subjects import Subjects
 from View.Teachers import Teachers
@@ -11,7 +14,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget,
                              QTabWidget, QAbstractScrollArea,
                              QVBoxLayout, QHBoxLayout,
                              QTableWidget, QGroupBox,
-                             QTableWidgetItem, QPushButton, QMessageBox)
+                             QTableWidgetItem, QPushButton, QMessageBox, QLabel)
 
 DAYS_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 WEEKS_NUMBER = 2  # WARNING! db has only two weeks as bool field
@@ -33,7 +36,6 @@ class MainWindow(QWidget):
         entry_data = json.load(entry_data)
         self.dataBase = Database(entry_data)
 
-        self.setWindowTitle("bot_timetable")
         self.vbox = QVBoxLayout(self)
 
         self._create_all_objects()
@@ -44,6 +46,61 @@ class MainWindow(QWidget):
         self._create_subj_tab()
         self._create_teachers_tab()
         self._create_dep_tab()
+        self.set_styles()
+
+    def set_styles(self):
+        self.setWindowIcon(QtGui.QIcon('../img/timetable-icon.png'))
+        self.setStyleSheet("background-color: #ede9f2;")
+        self.setWindowTitle("Расписание")
+        self.update_times_button.setStyleSheet("""
+                                    QPushButton {
+                                        background-color: #e2dce6;
+                                    }
+                                    QPushButton:hover {
+                                        color: #a164ed;
+                                    }
+                                    """)
+        self.update_teachers_button.setStyleSheet("""
+                                            QPushButton {
+                                                background-color: #e2dce6;
+                                            }
+                                            QPushButton:hover {
+                                                color: #a164ed;
+                                            }
+                                            """)
+        self.update_teachers_button.setStyleSheet("""
+                                                    QPushButton {
+                                                        background-color: #e2dce6;
+                                                    }
+                                                    QPushButton:hover {
+                                                        color: #a164ed;
+                                                    }
+                                                    """)
+        self.update_dep_button.setStyleSheet("""
+                                                    QPushButton {
+                                                        background-color: #e2dce6;
+                                                    }
+                                                    QPushButton:hover {
+                                                        color: #a164ed;
+                                                    }
+                                                    """)
+        self.update_subj_button.setStyleSheet("""
+                                                    QPushButton {
+                                                        background-color: #e2dce6;
+                                                    }
+                                                    QPushButton:hover {
+                                                        color: #a164ed;
+                                                    }
+                                                    """)
+        for i in range(0, 2):
+            self.tt_update_buttons[i].setStyleSheet("""
+                                                        QPushButton {
+                                                            background-color: #e2dce6;
+                                                        }
+                                                        QPushButton:hover {
+                                                            color: #a164ed;
+                                                        }
+                                                        """)
 
     def _week_to_type_bool(self, week):  # change if db has another week field then boolean
         if week == 1:
@@ -53,7 +110,7 @@ class MainWindow(QWidget):
         else:
             self.msg = QMessageBox()
             self.msg.setIcon(QMessageBox.Critical)
-            self.msg.setInformativeText("no such week in this db")
+            self.msg.setInformativeText("No such week in this db")
             self.msg.setText("Error")
             self.msg.setWindowTitle("Error")
 
@@ -105,7 +162,6 @@ class MainWindow(QWidget):
 
         self.times = Times(self.dataBase, self.times_interval_table)
 
-
     def _create_teachers_tab(self):
         self.teachers_svbox = QVBoxLayout(self.teachers_tab)
         self.teachers_shbox_table = QHBoxLayout()
@@ -132,7 +188,6 @@ class MainWindow(QWidget):
         self.teachers_gbox.setLayout(self.teachers_mvbox)
 
         self.teachers = Teachers(self.dataBase, self.teachers_table)
-
 
     def _create_dep_tab(self):
         self.dep_svbox = QVBoxLayout(self.dep_tab)
@@ -223,13 +278,17 @@ class MainWindow(QWidget):
         self.tt_day_mvbox = [[QVBoxLayout(self.tt_day_gboxes[week][day]) for day in range(0, DAYS_NUMBER)] for week in
                              range(0, WEEKS_NUMBER)]
         self.tt_day_table = [[QTableWidget() for day in range(0, DAYS_NUMBER)] for week in range(0, WEEKS_NUMBER)]
-        self.timetables = [[Timetable(self.dataBase, self.tt_day_table[week][day], week, day) for day in range(0, DAYS_NUMBER)] for week in range(0, WEEKS_NUMBER)]
+        self.timetables = [
+            [Timetable(self.dataBase, self.tt_day_table[week][day], week, day) for day in range(0, DAYS_NUMBER)] for
+            week in range(0, WEEKS_NUMBER)]
 
         self.HEADER_NAMES_TT = ["N", "Subject_id", "Room", "id", "", ""]
         self.HEADER_NAMES_TEACHERS = ["id", "Surname", "Name", "Dep_id", "", ""]
         self.HEADER_NAMES_TIMES = ["id", "start", "end", "", ""]
         self.HEADER_NAMES_DEPS = ["id", "link", "room", "", ""]
         self.HEADER_NAMES_SUBJ = ["id", "name", "Teacher_id", "", ""]
+
+
 
 
 app = QApplication(sys.argv)
