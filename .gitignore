@@ -1,4 +1,5 @@
 *.log
-*.pytest_cache
 venv/**
+.idea/
+**/__pycache__
 *__pycache__/
