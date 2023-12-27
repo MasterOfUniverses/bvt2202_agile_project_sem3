@@ -1,0 +1,32 @@
+INSERT INTO departments(link, room_numb) VALUES ('Fiz.Kult Kafedra', '301');
+INSERT INTO departments(link, room_numb) VALUES ('INO Kafedra', '302');
+INSERT INTO departments(link, room_numb) VALUES ('Fizika Kafedra', '303');
+INSERT INTO departments(link, room_numb) VALUES ('Istoriya Kafedra', '304');
+INSERT INTO departments(link, room_numb) VALUES ('Vishmat Kafedra', '305');
+INSERT INTO departments(link, room_numb) VALUES ('VvIT Kafedra', '306');
+INSERT INTO departments(link, room_numb) VALUES ('DevOps Kafedra', '307');
+
+INSERT INTO teachers(surname, name, id_department) VALUES ('Koroleva','Svetlana Anatolievna', 1);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Voronova','E.V.', 2);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Faizulaev','Vladimir Nurullaevich', 3);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Sklyar','Lidiya Nikolaevna', 4);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Shaimardanova','Liliya Kimmatovna', 5);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Valkovskiy','Sergey Nikolaevich', 3);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Furletov','Yuriy Mikhailovich', 3);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Timchuk','Andrey Vasilievich', 7);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Polishyuk','Yuriy Vladimirovich', 6);
+INSERT INTO teachers(surname, name, id_department) VALUES ('Trenin','Andrey Evgenievich', 3);
+
+INSERT INTO subject(name,id_teacher) VALUES ('Fiz.Kult.',1);
+INSERT INTO subject(name,id_teacher) VALUES ('INO, praktika',2);
+INSERT INTO subject(name,id_teacher) VALUES ('Fizika, praktika',3);
+INSERT INTO subject(name,id_teacher) VALUES ('Istoriya, praktika',4);
+INSERT INTO subject(name,id_teacher) VALUES ('Vishmat, lektsiya',5);
+INSERT INTO subject(name,id_teacher) VALUES ('Vishmat, praktika',5);
+INSERT INTO subject(name,id_teacher) VALUES ('Fizika, lektsiya',6);
+INSERT INTO subject(name,id_teacher) VALUES ('VvIT, praktika',7);
+INSERT INTO subject(name,id_teacher) VALUES ('DevOps, praktika',8);
+INSERT INTO subject(name,id_teacher) VALUES ('Istoriya, lektsiya',4);
+INSERT INTO subject(name,id_teacher) VALUES ('BD, lektsiya',9);
+INSERT INTO subject(name,id_teacher) VALUES ('BD, praktika',9);
+INSERT INTO subject(name,id_teacher) VALUES ('Fizika, lab.',10);
