@@ -1,0 +1,7 @@
+{
+    "database": "bot_timetable",
+    "user" : "admin_tt",
+    "password" : "admin_lab78",
+    "host" : "localhost",
+    "port" : "5432"
+}

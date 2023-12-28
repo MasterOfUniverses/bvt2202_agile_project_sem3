@@ -1,7 +1,7 @@
 {
     "database": "bot_timetable",
-    "user" : "admin_tt",
-    "password" : "admin_lab78",
-    "host" : "localhost",
+    "user" : "postgres",
+    "password" : "164014",
+    "host" : "127.0.0.1",
     "port" : "5432"
 }
